@@ -18,20 +18,20 @@ export default function PredictionEngine() {
   const [demandFactor, setDemandFactor] = useState(0.8);
   const [supplyFactor, setSupplyFactor] = useState(0.5);
   const [priceTrend, setPriceTrend] = useState(1.1);
-  const [] = useState(0.5);
+  // FIX: Removed unused 'costSensitivity' state
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
 
   useEffect(() => {
-    fetch("/api/commodities").then(r => r.json()).then(setCommodities);
-    fetch("/api/markets").then(r => r.json()).then(setMarkets);
+    fetch("http://localhost:3000/api/commodities").then(r => r.json()).then(setCommodities);
+    fetch("http://localhost:3000/api/markets").then(r => r.json()).then(setMarkets);
   }, []);
 
   const handlePredict = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/predict-gemini", {
+      const res = await fetch("http://localhost:3000/api/predict-gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -78,6 +78,7 @@ export default function PredictionEngine() {
                 <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-500">Source Hub</label>
                     <select 
+                        aria-label="Select Source Hub"
                         className="w-full p-2.5 rounded bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/20 dark:text-white text-sm"
                         value={source} onChange={e => setSource(e.target.value)}
                     >
@@ -88,6 +89,7 @@ export default function PredictionEngine() {
                 <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-500">Commodity</label>
                     <select 
+                        aria-label="Select Commodity"
                         className="w-full p-3 rounded bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/20 dark:text-white"
                         value={selectedCommodity} onChange={e => setSelectedCommodity(e.target.value)}
                     >
@@ -98,11 +100,23 @@ export default function PredictionEngine() {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500">Inventory</label>
-                        <Input type="number" value={inventory} onChange={e => setInventory(Number(e.target.value))} className="dark:bg-black" />
+                        <Input 
+                            type="number" 
+                            aria-label="Current Inventory"
+                            value={inventory} 
+                            onChange={e => setInventory(Number(e.target.value))} 
+                            className="dark:bg-black" 
+                        />
                     </div>
                     <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500">Capacity</label>
-                        <Input type="number" value={capacity} onChange={e => setCapacity(Number(e.target.value))} className="dark:bg-black" />
+                        <Input 
+                            type="number" 
+                            aria-label="Max Capacity"
+                            value={capacity} 
+                            onChange={e => setCapacity(Number(e.target.value))} 
+                            className="dark:bg-black" 
+                        />
                     </div>
                 </div>
             </div>
@@ -183,8 +197,30 @@ export default function PredictionEngine() {
 
 // Helpers
 function SliderControl({ label, value, setValue, color }: any) {
-    return <div className="space-y-3"><div className="flex justify-between"><span className="text-xs font-bold text-slate-500 uppercase">{label}</span><span className="text-xs font-bold dark:text-white">{value.toFixed(2)}</span></div><input type="range" min="0.1" max="2.0" step="0.05" value={value} onChange={e => setValue(Number(e.target.value))} className={`w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer ${color}`}/></div>;
+    return (
+        <div className="space-y-3">
+            <div className="flex justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase">{label}</span>
+                <span className="text-xs font-bold dark:text-white">{value.toFixed(2)}</span>
+            </div>
+            {/* FIX: Added aria-label to this input */}
+            <input 
+                type="range" 
+                aria-label={label}
+                min="0.1" max="2.0" step="0.05" 
+                value={value} 
+                onChange={e => setValue(Number(e.target.value))} 
+                className={`w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer ${color}`}
+            />
+        </div>
+    );
 }
+
 function MetricCard({ label, value }: any) {
-    return <Card className="p-4 bg-white dark:bg-neutral-900 border-slate-200 dark:border-white/10"><p className="text-[10px] font-bold text-slate-500 uppercase mb-1">{label}</p><p className="text-xl font-bold text-slate-900 dark:text-white truncate">{value}</p></Card>;
+    return (
+        <Card className="p-4 bg-white dark:bg-neutral-900 border-slate-200 dark:border-white/10">
+            <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">{label}</p>
+            <p className="text-xl font-bold text-slate-900 dark:text-white truncate">{value}</p>
+        </Card>
+    );
 }

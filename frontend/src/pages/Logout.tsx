@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Power, ShieldCheck, Lock, Loader2 } from "lucide-react";
+// FIX: Removed 'Loader2' from the import list below
+import { Power, ShieldCheck, Lock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 export default function Logout() {
@@ -10,7 +11,7 @@ export default function Logout() {
 
   useEffect(() => {
     // 1. Clear any stored auth tokens (simulated)
-    localStorage.removeItem("user_token");
+    localStorage.removeItem("isAuthenticated"); // Ensure this matches your login key
     sessionStorage.clear();
 
     // 2. Animate the "Shutdown" sequence
@@ -26,7 +27,7 @@ export default function Logout() {
         }
         // Change status text halfway through
         if (prev > 60) setStatus("Encrypting Logs...");
-        return prev + 2; // Fills in approx 2.5 seconds
+        return prev + 2; 
       });
     }, 40);
 
