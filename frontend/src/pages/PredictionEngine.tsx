@@ -18,7 +18,7 @@ export default function PredictionEngine() {
   const [demandFactor, setDemandFactor] = useState(0.8);
   const [supplyFactor, setSupplyFactor] = useState(0.5);
   const [priceTrend, setPriceTrend] = useState(1.1);
-  const [costSensitivity, setCostSensitivity] = useState(0.5);
+  const [] = useState(0.5);
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
