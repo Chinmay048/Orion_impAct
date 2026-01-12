@@ -17,7 +17,7 @@ export default function Alerts() {
 
   const fetchAlerts = async () => {
     try {
-        const res = await fetch("http://localhost:3000/api/alerts");
+        const res = await fetch("/api/alerts");
         const data = await res.json();
         setAlerts(data);
         setLastUpdated(new Date().toLocaleTimeString());

@@ -9,7 +9,6 @@ import {
   AlertTriangle, 
   TrendingUp, 
   TrendingDown,
-  ArrowRight
 } from "lucide-react";
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler
@@ -24,7 +23,7 @@ export default function MarketSensing() {
 
   useEffect(() => {
     const fetchData = async () => {
-        const res = await fetch("http://localhost:3000/api/market-sensing");
+        const res = await fetch("/market-sensing");
         const data = await res.json();
         setMarketData(data.marketData);
         setGlobalFeed(data.globalFeed);

@@ -24,14 +24,14 @@ export default function PredictionEngine() {
   const [result, setResult] = useState<any>(null);
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/commodities").then(r => r.json()).then(setCommodities);
-    fetch("http://localhost:3000/api/markets").then(r => r.json()).then(setMarkets);
+    fetch("/api/commodities").then(r => r.json()).then(setCommodities);
+    fetch("/api/markets").then(r => r.json()).then(setMarkets);
   }, []);
 
   const handlePredict = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/api/predict-gemini", {
+      const res = await fetch("/api/predict-gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

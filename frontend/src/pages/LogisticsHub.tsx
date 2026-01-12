@@ -17,8 +17,8 @@ export default function InventoryManager() {
 
   // Fetch Data Function
   const fetchData = async () => {
-    const mRes = await fetch("http://localhost:3000/api/markets");
-    const cRes = await fetch("http://localhost:3000/api/commodities");
+    const mRes = await fetch("/api/markets");
+    const cRes = await fetch("/api/commodities");
     setMarkets(await mRes.json());
     setCommodities(await cRes.json());
   };
@@ -28,7 +28,7 @@ export default function InventoryManager() {
   // 1. MANUAL UPDATE HANDLER
   const handleUpdate = async (action: any) => {
     setLoading(true);
-    await fetch("http://localhost:3000/api/inventory/update", {
+    await fetch("/api/inventory/update", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ market: selectedMarket, quantity, action })
@@ -46,7 +46,7 @@ export default function InventoryManager() {
     // Calculate gap to fill
     const orderQty = hub.capacity - hub.stock;
 
-    await fetch("http://localhost:3000/api/inventory/update", {
+    await fetch("/api/inventory/update", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ market: hub.name, quantity: orderQty, action: "ADD" })

@@ -3,8 +3,7 @@ import { Card } from "@/components/ui/card";
 // FIX 1: Use relative import instead of '@' to ensure it finds the file
 import { Switch } from "../components/ui/switch"; 
 import { 
-  BarChart3, 
-  PieChart, 
+  BarChart3,
   TrendingUp, 
   Activity, 
   ShieldAlert, 
@@ -34,7 +33,7 @@ export default function Analytics() {
   const [simulateStress, setSimulateStress] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/analytics").then(r => r.json()).then(setData);
+    fetch("/analytics").then(r => r.json()).then(setData);
   }, []);
 
   if (!data) return <div className="p-8 text-slate-500">Loading Intelligence...</div>;
@@ -52,7 +51,7 @@ export default function Analytics() {
     ],
   };
 
-  const radarOptions = {
+  const radarOptions:any = {
     scales: {
       r: {
         angleLines: { color: '#334155' },
