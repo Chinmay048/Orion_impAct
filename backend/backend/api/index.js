@@ -9,7 +9,12 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 
-// *** YOUR GEMINI API KEY ***
+// Logging Middleware
+app.use((req, res, next) => {
+    console.log(`[Request Received] ${req.method} ${req.path}`);
+    next();
+});
+
 const GEN_AI_KEY = "AIzaSyBpkyAgN1y658Gk_iVms-ye7iF2a4Z1TgY"; 
 const genAI = new GoogleGenerativeAI(GEN_AI_KEY);
 
@@ -95,6 +100,7 @@ app.post('/api/predict-gemini', async (req, res) => {
     const fillRate = Number(inventory) / safeCapacity;
     const scarcityRisk = Math.max(0, Math.min(100, Math.round((1 - fillRate) * 100)));
     let recommendedQty = 0;
+    
     if (elasticity > 1.2) recommendedQty = Math.round(Number(inventory) * 2.5);
     else if (elasticity < 0.8) recommendedQty = 0;
     else recommendedQty = Math.round(Number(inventory) * 0.8);
@@ -108,6 +114,7 @@ app.post('/api/predict-gemini', async (req, res) => {
         const text = response.text();
         actionPlan = text.split('\n').filter(line => line.trim().length > 0).slice(0, 4);
     } catch (error) {
+        // Fallback
         if (elasticity > 1.2) actionPlan = ["1. Trigger emergency bulk procurement.", "2. Secure alternative freight carriers.", "3. Lock in current prices immediately.", "4. Alert production of incoming surplus."];
         else actionPlan = ["1. Maintain current stock levels.", "2. Monitor market prices for dips.", "3. Optimize warehouse storage layout.", "4. Review supplier lead times."];
     }
@@ -134,6 +141,7 @@ app.get('/api/logistics', (req, res) => {
     res.json(SHIPMENTS);
 });
 
+// FIX: Correct path for analytics
 app.get('/api/analytics', (req, res) => {
     res.json({
         kpis: { spend: "₹1.2Cr", efficiency: 94.2, riskIndex: 12, sustainability: 88 },
@@ -154,28 +162,8 @@ app.get('/api/analytics', (req, res) => {
     });
 });
 
-// --- CHAOS ENGINE: RANDOMIZED ALERTS ---
-const ALERT_POOL = [
-    { source: "Inventory AI", type: "CRITICAL", title: "Stock Depletion Imminent", message: "Pune Factory Titanium reserves < 48 hours.", fix: "Initiate Emergency Transfer (Delhi)" },
-    { source: "Market Sentinel", type: "WARNING", title: "Price Surge Detected", message: "Lithium ion global index up 12% in 4h.", fix: "Lock Supplier Contract" },
-    { source: "Cyber Security", type: "INFO", title: "API Latency Spike", message: "Gateway response time > 400ms.", fix: "Reroute Traffic" },
-    { source: "Logistics Hub", type: "WARNING", title: "Shipment Delayed", message: "Container #442 stuck at customs.", fix: "File Expedited Clearance" },
-    { source: "Sustainability", type: "INFO", title: "Carbon Limit Reached", message: "Monthly CO2 quota 95% utilized.", fix: "Switch to Rail Freight" },
-    { source: "Quality Control", type: "CRITICAL", title: "Defect Rate Spike", message: "Batch #992 showing 15% failure.", fix: "Halt Production Line A" },
-    { source: "Demand Forecaster", type: "WARNING", title: "Unusual Demand", message: "Sudden order spike from Northern Region.", fix: "Increase Safety Stock" }
-];
-
 app.get('/api/alerts', (req, res) => {
-    // Randomly pick 2 to 4 alerts from the pool
-    const count = Math.floor(Math.random() * 3) + 2; 
-    const shuffled = ALERT_POOL.sort(() => 0.5 - Math.random());
-    const selected = shuffled.slice(0, count).map((a, i) => ({ 
-        ...a, 
-        id: Date.now() + i, 
-        status: "Active" 
-    }));
-    
-    res.json(selected);
+    res.json([]);
 });
 
-app.listen(port, () => console.log(`Backend Active on ${port}`));
+app.listen(port, () => console.log(`Backend Active on Port ${port}`));

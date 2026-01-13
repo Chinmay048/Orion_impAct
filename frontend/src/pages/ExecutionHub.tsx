@@ -17,7 +17,7 @@ export default function LogisticsHub() {
   const [optimizing, setOptimizing] = useState(false);
 
   useEffect(() => {
-    fetch("/api/logistics").then(r => r.json()).then(data => {
+    fetch("http://localhost:3000/api/logistics").then(r => r.json()).then(data => {
         setShipments(data);
         if (data.length > 0) setSelected(data[0]);
     });
