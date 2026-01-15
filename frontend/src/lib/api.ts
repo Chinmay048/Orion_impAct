@@ -1,5 +1,5 @@
 // src/lib/api.ts
-const API_URL = "http://localhost:3000";
+const API_URL = "https://orion-backend-op6i.onrender.com";
 
 export interface Decision {
   id: string;

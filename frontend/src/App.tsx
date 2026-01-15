@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import React from "react"; // Ensure React is imported
+// 1. CHANGE IMPORT: Switch BrowserRouter to HashRouter
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom"; 
+import React from "react"; 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
 // Pages
@@ -18,7 +19,6 @@ import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// FIX: Changed 'JSX.Element' to 'React.ReactNode' to fix the namespace error
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuth = localStorage.getItem("isAuthenticated");
   return isAuth ? <>{children}</> : <Navigate to="/login" replace />;
@@ -27,7 +27,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      {/* 2. CHANGE COMPONENT: Use HashRouter here */}
+      <HashRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
@@ -50,7 +51,7 @@ export default function App() {
 
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </QueryClientProvider>
   );
 }

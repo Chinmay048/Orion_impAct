@@ -1,125 +1,143 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { 
-  Activity, 
-  Cpu, 
-  Terminal,
-  ChevronRight,
-  ShieldCheck,
-  Zap
-} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart3, BrainCircuit, Layers, ShieldCheck, Zap } from "lucide-react";
 
-export default function Landing() {
+const Landing = () => {
   return (
-    <div className="relative min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300 overflow-hidden flex flex-col font-sans selection:bg-emerald-500/30">
+    <div className="min-h-screen bg-black text-white selection:bg-white/20 font-sans">
       
-      {/* --- BACKGROUND FX --- */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-40 dark:opacity-20 pointer-events-none transition-all duration-300"></div>
-      
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
-      
-      {/* --- HEADER --- */}
-      <header className="relative z-10 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto w-full">
-        <div className="flex items-center gap-3 group cursor-default">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.4)] group-hover:scale-105 transition-transform duration-300">
-                <span className="font-mono font-bold text-lg text-white">iA</span>
-            </div>
-            <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-              impAct
-            </span>
-        </div>
+      {/* --- BACKGROUND GRID & SPOTLIGHT EFFECTS --- */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+        {/* Spotlight / Radial Glow */}
+        <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-blue-500 opacity-20 blur-[100px]"></div>
+        <div className="absolute left-0 right-0 top-[-10%] -z-10 m-auto h-[400px] w-[800px] bg-indigo-500/10 opacity-40 blur-[80px]"></div>
+      </div>
 
-        <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-500 dark:text-slate-400">
-                <span className="flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 text-xs font-mono">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    SYSTEM ENCRYPTED // LIVE
-                </span>
-            </div>
-            
-            <ThemeToggle />
+      {/* --- NAVBAR --- */}
+      <nav className="fixed w-full z-50 top-0 border-b border-white/5 bg-black/50 backdrop-blur-xl transition-all">
+        <div className="container mx-auto px-6 h-20 flex items-center justify-between">
+          
+          {/* LOGO */}
+          <div className="flex items-center gap-4">
+            <img 
+              src="/Orion_impAct/logo1.png" 
+              alt="impAct Logo" 
+              // Sized for professional look (h-12 is ~48px)
+              className="h-12 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]" 
+            />
+          </div>
 
+          {/* NAV ACTIONS */}
+          <div className="flex items-center gap-6">
             <Link to="/login">
-                <Button variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:border-emerald-500/50 transition-all font-bold">
-                    Console Login
-                </Button>
+              <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-white/5 font-medium transition-colors">
+                Sign In
+              </Button>
             </Link>
+            <Link to="/login">
+              <Button className="bg-white text-black hover:bg-zinc-200 border border-transparent font-bold shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all hover:scale-105 rounded-full px-6">
+                Get Started 
+              </Button>
+            </Link>
+          </div>
         </div>
-      </header>
+      </nav>
 
       {/* --- HERO SECTION --- */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 text-center mt-10 md:mt-20 max-w-5xl mx-auto">
+      <section className="relative z-10 pt-40 pb-24 lg:pt-52 lg:pb-32 overflow-hidden text-center px-4">
         
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 text-xs font-mono mb-8 backdrop-blur-md animate-in slide-in-from-bottom-4 fade-in duration-700 shadow-sm">
-            <Terminal className="w-3 h-3" />
-            <span>GENUINE AI PROCUREMENT // v2.4</span>
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-zinc-400 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+          </span>
+          V 2.1.0 // SYSTEM ONLINE
         </div>
 
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 animate-in slide-in-from-bottom-8 fade-in duration-1000 bg-clip-text text-transparent bg-gradient-to-b from-slate-900 via-slate-800 to-slate-500 dark:from-white dark:via-white dark:to-slate-500">
-          The Factory Command Center <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">Reimagined.</span>
+        {/* Headline */}
+        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-8 bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-white/50 animate-in fade-in zoom-in-95 duration-1000">
+          Discover Supply <br />
+          With <span className="text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">Intelligence.</span>
         </h1>
 
-        <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mb-10 animate-in slide-in-from-bottom-10 fade-in duration-1000 delay-200 leading-relaxed">
-          Combat industrial shortages with <strong>Neural Elasticity Modeling</strong>. Sync inventory across hubs, track real-time commodity shifts, and execute AI-driven procurement.
+        {/* Subtitle */}
+        <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-12 leading-relaxed font-light animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
+         impAct unifies logistics, market sensing, and predictive AI into a single, powerful command center.
         </p>
 
-        <div className="animate-in slide-in-from-bottom-12 fade-in duration-1000 delay-300">
-            <Link to="/login">
-                <Button className="h-14 px-10 bg-emerald-600 hover:bg-emerald-500 text-white text-lg font-black tracking-widest shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 transition-all duration-300 relative overflow-hidden group">
-                    <span className="relative z-10 flex items-center gap-3">
-                        ENTER WAR ROOM
-                        <Zap className="w-5 h-5 fill-current" />
-                    </span>
-                    <div className="absolute top-0 -left-full w-full h-full bg-white/20 skew-x-[-20deg] group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                </Button>
-            </Link>
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+          <Link to="/login">
+            <Button size="lg" className="w-full sm:w-auto bg-white text-black hover:bg-zinc-200 font-bold px-8 h-12 rounded-full text-lg shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]">
+              Launch Console <Zap className="w-4 h-4 ml-2 fill-black" />
+            </Button>
+          </Link>
+          <Button variant="outline" size="lg" className="w-full sm:w-auto border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/20 h-12 rounded-full text-lg backdrop-blur-sm">
+            Watch Demo
+          </Button>
         </div>
+      </section>
 
-        {/* --- FEATURE GRID --- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-24 w-full animate-in slide-in-from-bottom-16 fade-in duration-1000 delay-500">
+      {/* --- FEATURE GRID --- */}
+      <section className="relative z-10 py-24 bg-gradient-to-b from-transparent to-black">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-20">
+            <h2 className="text-3xl font-bold mb-4 tracking-tight text-white">Core Capabilities</h2>
+            <p className="text-zinc-500">Engineered for resilience, speed, and precision.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <FeatureCard 
-                icon={<Cpu className="w-6 h-6 text-purple-500" />}
-                title="Elasticity Prediction"
-                desc="Our AI calculates supply-demand elasticity scores using real-time market trends to recommend optimal order quantities."
-                delay="delay-0"
+              icon={<BrainCircuit className="w-6 h-6 text-white" />}
+              title="AI Prediction"
+              desc="Forecast demand and identify risks with state-of-the-art machine learning models."
             />
             <FeatureCard 
-                icon={<Activity className="w-6 h-6 text-emerald-500" />}
-                title="Sensing Radar"
-                desc="Monitor global sentiment and price volatility for raw materials. Detect port strikes or surges before they hit your runway."
-                delay="delay-100"
+              icon={<Layers className="w-6 h-6 text-white" />}
+              title="Logistics Hub"
+              desc="Real-time visibility and inventory optimization across your entire network."
             />
-            <FeatureCard 
-                icon={<ShieldCheck className="w-6 h-6 text-blue-500" />}
-                title="Autonomous Alerts"
-                desc="The Neural Sentinel detects stock runouts and system anomalies, providing one-click autonomous remediation protocols."
-                delay="delay-200"
+             <FeatureCard 
+              icon={<BarChart3 className="w-6 h-6 text-white" />}
+              title="Market Sensing"
+              desc="Analyze external market signals to stay ahead of trends and competitors."
             />
+             <FeatureCard 
+              icon={<ShieldCheck className="w-6 h-6 text-white" />}
+              title="Execution & Alerts"
+              desc="Automated workflows and proactive alerts to resolve issues instantly."
+            />
+          </div>
         </div>
-      </main>
+      </section>
 
-      <footer className="relative z-10 py-8 text-center text-slate-500 dark:text-slate-600 text-xs font-mono border-t border-slate-200 dark:border-slate-800/50 mt-20 bg-white/50 dark:bg-slate-950/80 backdrop-blur-sm">
-        <p>TERMINAL ID: IA-COMMAND-ALPHA // DATA ENCRYPTION: ACTIVE</p>
+      {/* --- FOOTER --- */}
+      <footer className="relative z-10 py-8 border-t border-white/10 bg-black text-center text-zinc-600 text-sm">
+        <p>© 2026 impAct Systems. All rights reserved. | Hackathon Build v2.1.0</p>
       </footer>
     </div>
   );
-}
+};
 
-function FeatureCard({ icon, title, desc, delay }: any) {
-    return (
-        <div className={`p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 backdrop-blur-md hover:shadow-lg dark:hover:bg-slate-800/60 hover:border-emerald-500/30 transition-all duration-300 text-left group ${delay}`}>
-            <div className="w-12 h-12 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                {icon}
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-                {title}
-                <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 text-slate-500 -translate-x-2 group-hover:translate-x-0 transition-all" />
-            </h3>
-            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                {desc}
-            </p>
-        </div>
-    )
-}
+// Modern, Minimalist Card Component
+const FeatureCard = ({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) => (
+  <Card className="bg-zinc-900/40 border-white/5 shadow-none hover:bg-zinc-900/80 hover:border-white/10 transition-all duration-300 group cursor-default backdrop-blur-md">
+    <CardHeader>
+      <div className="mb-4 p-3 bg-white/5 rounded-xl w-fit group-hover:bg-white/10 transition-colors border border-white/5">
+        {icon}
+      </div>
+      <CardTitle className="text-lg text-white font-medium group-hover:text-blue-200 transition-colors">{title}</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <p className="text-zinc-400 text-sm leading-relaxed">
+        {desc}
+      </p>
+    </CardContent>
+  </Card>
+);
+
+export default Landing;

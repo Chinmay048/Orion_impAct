@@ -33,7 +33,7 @@ export default function Dashboard() {
   const fetchData = async () => {
     try {
       setError(false);
-      const res = await fetch("http://localhost:3000/api/company-stats");
+      const res = await fetch("https://orion-backend-op6i.onrender.com/api/company-stats");
       if (!res.ok) throw new Error("Server Error");
       const json = await res.json();
       setData(json);

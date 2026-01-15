@@ -2,161 +2,97 @@ import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
-  TrendingUp, 
+  Package, 
+  LineChart, 
   Radio, 
   Truck, 
-  LineChart, 
-  AlertTriangle, 
-  ChevronLeft, 
-  ChevronRight,
-  Menu,
-  Package,
-  LogOut // <--- Imported LogOut icon
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { ThemeToggle } from "@/components/ThemeToggle";
+  PieChart, 
+  Bell, 
+  LogOut,
+  Menu} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { OrionLogo } from "@/components/OrionLogo";
 
-// Sidebar configuration
-const sidebarItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-  { icon: Package, label: "Inventory", path: "/dashboard/inventory" }, 
-  { icon: TrendingUp, label: "Prediction Engine", path: "/dashboard/prediction" },
-  { icon: Radio, label: "Market Sensing", path: "/dashboard/sensing" },
-  { icon: Truck, label: "Logistics Hub", path: "/dashboard/execution" },
-  { icon: LineChart, label: "Analytics", path: "/dashboard/analytics" },
-  { icon: AlertTriangle, label: "Alerts", path: "/dashboard/alerts" },
+const NAV_ITEMS = [
+  { label: "Command", path: "/dashboard", icon: LayoutDashboard },
+  { label: "Inventory", path: "/dashboard/inventory", icon: Package },
+  { label: "Prediction", path: "/dashboard/prediction", icon: LineChart },
+  { label: "Sensing", path: "/dashboard/sensing", icon: Radio },
+  { label: "Logistics", path: "/dashboard/execution", icon: Truck },
+  { label: "Analytics", path: "/dashboard/analytics", icon: PieChart },
+  { label: "Alerts", path: "/dashboard/alerts", icon: Bell },
 ];
 
-export function DashboardLayout() {
+export const DashboardLayout = () => {
   const location = useLocation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-slate-50 transition-colors duration-300 font-sans">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans selection:bg-blue-500/30">
       
-      {/* MOBILE MENU OVERLAY */}
+      {/* MOBILE OVERLAY */}
       {isMobileOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => setIsMobileOpen(false)}
-        />
+        <div className="fixed inset-0 bg-black/80 z-40 lg:hidden backdrop-blur-sm" onClick={() => setIsMobileOpen(false)} />
       )}
 
       {/* SIDEBAR */}
-      <aside 
-        className={cn(
-          "fixed md:relative z-50 h-screen border-r border-slate-200 dark:border-white/10 bg-white dark:bg-neutral-900 transition-all duration-300 flex flex-col",
-          isCollapsed ? "w-20" : "w-64",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        )}
-      >
-        {/* LOGO AREA */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100 dark:border-white/5">
-          <div className={cn("flex items-center gap-2 overflow-hidden", isCollapsed && "justify-center w-full")}>
-            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex-shrink-0 flex items-center justify-center text-white font-mono font-bold">iA</div>
-            {!isCollapsed && <span className="text-xl font-bold tracking-tight">impAct</span>}
-          </div>
-          {/* Collapse Button (Desktop Only) */}
-          <button 
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden md:flex p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500"
-          >
-            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </button>
+      <aside className={`
+        fixed lg:static inset-y-0 left-0 z-50 w-64 bg-slate-900/50 border-r border-slate-800/50 backdrop-blur-xl transition-transform duration-300 ease-in-out flex flex-col
+        ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}>
+        <div className="h-16 flex items-center px-6 border-b border-slate-800/50">
+          <OrionLogo iconSize={20} className="text-xl" />
         </div>
 
-        {/* NAVIGATION */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {sidebarItems.map((item) => {
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {NAV_ITEMS.map((item) => {
             const isActive = location.pathname === item.path;
+            const Icon = item.icon;
             return (
-              <Link
-                key={item.path}
+              <Link 
+                key={item.path} 
                 to={item.path}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative",
+                onClick={() => setIsMobileOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${
                   isActive 
-                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-900/20" 
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5",
-                  isCollapsed && "justify-center"
-                )}
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                }`}
               >
-                <item.icon className={cn("w-5 h-5 flex-shrink-0", isActive ? "text-white" : "text-slate-500 dark:text-slate-400 group-hover:text-emerald-500")} />
-                {!isCollapsed && <span>{item.label}</span>}
-                
-                {/* Tooltip for Collapsed Mode */}
-                {isCollapsed && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
-                    {item.label}
-                  </div>
-                )}
+                <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500 group-hover:text-blue-400"}`} />
+                {item.label}
               </Link>
             );
           })}
         </nav>
 
-        {/* LOGOUT BUTTON AREA (Added Here) */}
-        <div className="p-3 border-t border-slate-100 dark:border-white/5">
-            <Link 
-                to="/logout"
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10",
-                  isCollapsed && "justify-center"
-                )}
-            >
-                <LogOut className="w-5 h-5 flex-shrink-0 group-hover:scale-110 transition-transform" />
-                {!isCollapsed && <span>Logout</span>}
-            </Link>
-        </div>
-
-        {/* USER PROFILE */}
-        <div className="p-4 border-t border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-black/20">
-           <div className={cn("flex items-center gap-3", isCollapsed && "justify-center")}>
-             <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-500 to-blue-500 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white dark:ring-black shadow-sm">
-               JS
-             </div>
-             {!isCollapsed && (
-               <div className="overflow-hidden">
-                 <p className="text-sm font-medium truncate">Jane Smith</p>
-                 <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Logistics Manager</p>
-               </div>
-             )}
-           </div>
+        <div className="p-4 border-t border-slate-800/50">
+          <Link to="/logout">
+            <Button variant="ghost" className="w-full justify-start gap-3 text-red-400 hover:text-red-300 hover:bg-red-500/10">
+              <LogOut className="w-4 h-4" /> Disconnect
+            </Button>
+          </Link>
         </div>
       </aside>
 
-      {/* MAIN CONTENT WRAPPER */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* TOP HEADER */}
-        <header className="h-16 border-b border-slate-200 dark:border-white/10 bg-white/80 dark:bg-black/80 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-30">
-          <div className="flex items-center gap-4">
-            <button className="md:hidden" onClick={() => setIsMobileOpen(true)}>
-              <Menu className="w-5 h-5" />
-            </button>
-            <div>
-              <h1 className="text-sm font-bold text-slate-900 dark:text-white hidden sm:block">
-                Operations Dashboard
-              </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
-                System Status: <span className="text-emerald-500 font-medium">Optimal</span>
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-             <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-mono">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                LIVE FEED
-             </div>
-             <ThemeToggle />
-          </div>
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 flex flex-col min-w-0 bg-slate-950 relative">
+        {/* Background Gradients */}
+        <div className="absolute top-0 left-0 w-full h-96 bg-blue-900/10 blur-[100px] pointer-events-none" />
+        
+        {/* Mobile Header */}
+        <header className="h-16 lg:hidden flex items-center px-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-30">
+          <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(true)}>
+            <Menu className="w-5 h-5" />
+          </Button>
+          <div className="ml-4"><OrionLogo iconSize={18} className="text-lg" /></div>
         </header>
 
-        {/* PAGE CONTENT */}
-        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
+        {/* Content Injector */}
+        <div className="flex-1 p-4 lg:p-8 overflow-auto z-10">
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
-}
+};
