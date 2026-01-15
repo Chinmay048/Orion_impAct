@@ -7,9 +7,14 @@ import {
   Clock, 
   Loader2,
   ShieldCheck,
-  RefreshCw
+  RefreshCw,
+  Zap,
+  Box,
+  MapPin,
+  Layers,
+  Database
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Line } from "react-chartjs-2";
 import {
@@ -21,7 +26,8 @@ import {
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  ScriptableContext
 } from "chart.js";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
@@ -36,6 +42,7 @@ export default function Dashboard() {
       const res = await fetch("https://orion-backend-op6i.onrender.com/api/company-stats");
       if (!res.ok) throw new Error("Server Error");
       const json = await res.json();
+      console.log("DASHBOARD DATA:", json); 
       setData(json);
     } catch (e) { 
       console.error(e);
@@ -45,153 +52,205 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000); // Live price updates
+    const interval = setInterval(fetchData, 5000); 
     return () => clearInterval(interval);
   }, []);
 
-  // ERROR STATE (Instead of Infinite Spinner)
-  if (error) {
-    return (
-        <div className="flex h-screen flex-col items-center justify-center gap-4">
-            <div className="p-4 bg-red-50 text-red-600 rounded-full"><ShieldCheck className="w-12 h-12" /></div>
-            <h2 className="text-xl font-bold dark:text-white">Connection Lost</h2>
-            <p className="text-slate-500">Ensure backend is running: <code className="bg-slate-100 px-2 py-1 rounded">node api/index.js</code></p>
-            <Button onClick={fetchData} variant="outline" className="gap-2"><RefreshCw className="w-4 h-4" /> Retry Connection</Button>
-        </div>
-    );
-  }
-
-  // LOADING STATE
-  if (!data) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin w-10 h-10 text-emerald-500" /></div>;
-
-  // CHART CONFIG
-  const chartData = {
+  // --- CHART CONFIGURATION ---
+  // Fixes TS Error: We only create the object if data exists
+  const chartData = data ? {
     labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    datasets: [
-      {
-        label: 'Daily Production (Tons)',
+    datasets: [{
+        label: 'Output',
         data: data.profile.productionHistory,
-        borderColor: '#3b82f6', // Blue-500
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        tension: 0.4,
-        fill: true,
-      },
-    ],
-  };
+        borderColor: '#3b82f6', 
+        borderWidth: 3,
+        backgroundColor: (context: ScriptableContext<"line">) => {
+            const ctx = context.chart.ctx;
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, "rgba(59, 130, 246, 0.5)");
+            gradient.addColorStop(1, "rgba(59, 130, 246, 0)");
+            return gradient;
+        },
+        tension: 0.4, 
+        fill: true, 
+        pointBackgroundColor: '#000', 
+        pointBorderColor: '#3b82f6',
+    }],
+  } : { labels: [], datasets: [] }; // Empty fallback to satisfy TS
 
   const chartOptions = {
-    responsive: true,
+    responsive: true, 
     maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
-      y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
-    }
+    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#18181b', bodyColor: '#cbd5e1' } },
+    scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, border: { display: false } } }
   };
 
+  // --- BULLETPROOF DATA PARSING ---
+  // This logic handles BOTH the old object format AND the new array format
+  const getRunwayItems = () => {
+    if (!data || !data.runway) return [];
+    if (Array.isArray(data.runway)) return data.runway;
+    // Fallback for old backend data:
+    return [{ location: "Global Aggregate", daysRemaining: data.runway.days, status: data.runway.status }];
+  };
+
+  const runwayItems = getRunwayItems();
+
+  const getEfficiencyItems = () => {
+    if (!data || !data.productionOutput || !Array.isArray(data.productionOutput)) return [];
+    return data.productionOutput;
+  };
+
+  const efficiencyItems = getEfficiencyItems();
+
+
+  if (error) return (
+    <div className="flex h-[80vh] flex-col items-center justify-center gap-6">
+        <div className="p-6 bg-red-500/10 text-red-500 rounded-full border border-red-500/20">
+            <ShieldCheck className="w-16 h-16" />
+        </div>
+        <div className="text-center">
+            <h2 className="text-2xl font-bold text-white mb-2">Signal Lost</h2>
+            <p className="text-zinc-500 mb-6">Backend offline. Please restart server.</p>
+            <Button onClick={fetchData} variant="outline" className="border-white/10 hover:bg-white/10 text-white gap-2">
+                <RefreshCw className="w-4 h-4" /> Retry Connection
+            </Button>
+        </div>
+    </div>
+  );
+
+  if (!data) return (
+    <div className="flex h-[80vh] items-center justify-center flex-col gap-4">
+        <Loader2 className="animate-spin w-12 h-12 text-blue-500" />
+        <p className="text-zinc-500 font-mono text-sm tracking-widest animate-pulse">ESTABLISHING UPLINK...</p>
+    </div>
+  );
+
   return (
-    <div className="space-y-6 animate-in fade-in">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       
-      {/* 1. HEADER & COMPANY ID */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 dark:border-white/10 pb-6">
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-6">
         <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
                 <Factory className="w-8 h-8 text-blue-500" />
                 {data.profile.name}
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                System Operational • {data.profile.sector}
+            <p className="text-zinc-400 mt-1 flex items-center gap-2 text-sm">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]"></span>
+                System Operational • <span className="text-zinc-500">{data.profile.sector}</span>
             </p>
-        </div>
-        
-        {/* Neural Risk Score */}
-        <div className="flex items-center gap-4 bg-slate-900 text-white p-3 rounded-xl border border-slate-800 shadow-lg">
-            <div className="text-right">
-                <p className="text-[10px] uppercase font-bold text-slate-400">Supply Chain Risk</p>
-                <p className="text-2xl font-bold text-emerald-400">{data.riskScore}/100</p>
-            </div>
-            <ShieldCheck className="w-8 h-8 text-emerald-500" />
         </div>
       </div>
 
-      {/* 2. LIVE RAW MATERIAL TICKER */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {data.materials.map((m: any) => (
-            <Card key={m.name} className="p-5 bg-white dark:bg-neutral-900 border-slate-200 dark:border-white/10 flex justify-between items-center group hover:border-blue-500 transition-colors">
-                <div>
-                    <p className="text-xs font-bold text-slate-500 uppercase mb-1">{m.name}</p>
-                    <p className="text-2xl font-bold dark:text-white">₹{m.price}</p>
-                </div>
-                <div className={`text-right ${m.trend === 'up' ? 'text-emerald-500' : 'text-red-500'}`}>
-                    <div className="flex items-center justify-end gap-1 font-bold text-lg">
-                        {m.trend === 'up' ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownRight className="w-5 h-5" />}
-                        {m.change}%
+      {/* SUB-HEADER */}
+      <div className="flex items-center gap-2 text-zinc-400 text-sm font-mono uppercase tracking-wider">
+         <Layers className="w-4 h-4 text-blue-500" /> Live Material Procurement
+      </div>
+
+      {/* TICKER CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {data.materials?.map((m: any) => (
+            <Card key={m.name} className="bg-zinc-900/40 border-white/5 backdrop-blur-sm">
+                <CardContent className="p-6 flex justify-between items-center">
+                    <div>
+                        <p className="text-xs font-bold text-zinc-500 uppercase mb-1">{m.name}</p>
+                        <p className="text-2xl font-bold text-white font-mono">₹{m.price}</p>
                     </div>
-                    <p className="text-[10px] text-slate-400">Live Market</p>
-                </div>
+                    <div className={`text-right ${m.trend === 'up' ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <div className="flex items-center justify-end gap-1 font-bold text-lg">
+                            {m.trend === 'up' ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownRight className="w-5 h-5" />}
+                            {m.change}%
+                        </div>
+                    </div>
+                </CardContent>
             </Card>
         ))}
       </div>
 
-      {/* 3. MAIN DASHBOARD GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[450px]">
-        
-        {/* LEFT: PRODUCTION GRAPH */}
-        <Card className="lg:col-span-2 p-6 bg-white dark:bg-neutral-900 border-slate-200 dark:border-white/10 flex flex-col">
-            <div className="flex justify-between items-center mb-6">
+      {/* MAIN GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* GRAPH */}
+        <Card className="lg:col-span-2 bg-zinc-900/40 border-white/5 backdrop-blur-sm flex flex-col">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <div>
-                    <h3 className="text-lg font-bold dark:text-white">Production Output</h3>
-                    <p className="text-sm text-slate-500">Last 7 Days (Metric Tons)</p>
+                    <CardTitle className="text-lg font-medium text-zinc-200">Global Output Trend</CardTitle>
                 </div>
-                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600">
-                    <TrendingUp className="w-5 h-5" />
-                </div>
-            </div>
-            <div className="flex-1 min-h-0">
-                <Line data={chartData} options={chartOptions} />
-            </div>
+                <TrendingUp className="w-5 h-5 text-blue-400" />
+            </CardHeader>
+            <CardContent className="flex-1 min-h-[350px] pt-4">
+                 {/* Safe rendering for Chart */}
+                {data && <Line data={chartData} options={chartOptions as any} />}
+            </CardContent>
         </Card>
 
-        {/* RIGHT: INVENTORY RUNWAY */}
-        <Card className="lg:col-span-1 p-6 bg-white dark:bg-neutral-900 border-slate-200 dark:border-white/10 flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-6 opacity-5"><Clock className="w-32 h-32" /></div>
-
-            <div>
-                <h3 className="text-lg font-bold dark:text-white mb-1">Inventory Runway</h3>
-                <p className="text-sm text-slate-500">Time until critical stock depletion</p>
-            </div>
-
-            <div className="text-center py-8">
-                <span className="text-6xl font-mono font-bold dark:text-white block tracking-tighter">
-                    {data.runway.days}
-                </span>
-                <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Days Remaining</span>
-            </div>
-
-            <div className="space-y-3">
-                <div className="flex justify-between text-xs font-bold text-slate-500">
-                    <span>0 Days</span>
-                    <span>Safe Level ({data.profile.minStockLevel}T)</span>
-                </div>
-                {/* Visual Bar */}
-                <div className="w-full bg-slate-100 dark:bg-white/10 h-3 rounded-full overflow-hidden">
-                    <div 
-                        className={`h-full transition-all duration-1000 ${
-                            data.runway.status === 'CRITICAL' ? 'bg-red-500' : 'bg-emerald-500'
-                        }`} 
-                        style={{ width: `${Math.min(100, (data.profile.currentStock / (data.profile.minStockLevel * 2)) * 100)}%` }} 
-                    />
-                </div>
-                <div className="flex items-center gap-2 mt-2">
-                    <div className={`w-2 h-2 rounded-full ${data.runway.status === 'CRITICAL' ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
-                    <span className={`text-sm font-medium ${data.runway.status === 'CRITICAL' ? 'text-red-500' : 'text-emerald-500'}`}>
-                        Status: {data.runway.status}
-                    </span>
-                </div>
-            </div>
+        {/* INVENTORY RUNWAY */}
+        <Card className="lg:col-span-1 bg-zinc-900/40 border-white/5 backdrop-blur-sm flex flex-col h-[450px]">
+            <CardHeader>
+                <CardTitle className="text-lg font-medium text-zinc-200 flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-zinc-500" /> Inventory Runway
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
+                {runwayItems.length > 0 ? runwayItems.map((site: any) => (
+                    <div key={site.location} className="group p-2 rounded hover:bg-white/5 transition-colors">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-bold text-zinc-300 flex items-center gap-2">
+                                <MapPin className="w-3 h-3 text-zinc-600" /> {site.location}
+                            </span>
+                            <span className={`text-sm font-mono font-bold ${site.status === "CRITICAL" ? "text-red-400" : site.status === "WARNING" ? "text-yellow-400" : "text-emerald-400"}`}>
+                                {site.daysRemaining} Days
+                            </span>
+                        </div>
+                        <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                            <div className={`h-full ${site.status === "CRITICAL" ? "bg-red-500" : site.status === "WARNING" ? "bg-yellow-500" : "bg-emerald-500"}`} style={{ width: `${Math.min(100, (Number(site.daysRemaining) / 30) * 100)}%` }} />
+                        </div>
+                    </div>
+                )) : (
+                    <div className="text-zinc-500 text-sm italic p-4">Initializing Logistics Data...</div>
+                )}
+            </CardContent>
         </Card>
       </div>
+
+      {/* NEW HEADER: RAW MATERIAL USED */}
+      <div className="flex items-center gap-2 text-zinc-400 text-sm font-mono uppercase tracking-wider mt-4">
+         <Database className="w-4 h-4 text-emerald-500" /> Raw Material Usage & Efficiency
+      </div>
+
+      {/* MATERIAL EFFICIENCY MATRIX */}
+      <Card className="bg-zinc-900/40 border-white/5 backdrop-blur-sm">
+        <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                <CardTitle className="text-lg font-medium text-zinc-200">Material Efficiency Matrix</CardTitle>
+                <p className="text-sm text-zinc-500">Real-time Consumption Analysis</p>
+                </div>
+                <Zap className="w-5 h-5 text-yellow-500" />
+        </CardHeader>
+        <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {efficiencyItems.length > 0 ? efficiencyItems.map((item: any) => (
+                    <div key={item.material} className="p-4 rounded-xl bg-white/5 border border-white/5">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 rounded-lg bg-zinc-900"><Box className="w-4 h-4 text-blue-400" /></div>
+                            <div>
+                                <p className="text-sm font-bold text-white">{item.material}</p>
+                                <p className="text-xs text-zinc-500">Yield: {item.efficiency}</p>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs"><span className="text-zinc-500">Used</span><span className="text-zinc-300">{item.usage} kg</span></div>
+                            <div className="flex justify-between text-xs"><span className="text-zinc-500">Output</span><span className="text-emerald-400 font-bold">{item.outputGenerated} kg</span></div>
+                            <div className="h-1 w-full bg-zinc-800 rounded-full mt-2"><div className="h-full bg-emerald-500" style={{ width: item.efficiency }}></div></div>
+                        </div>
+                    </div>
+                )) : (
+                    <div className="text-zinc-500 text-sm italic p-4">Awaiting Production Data... (Restart Backend for Live Matrix)</div>
+                )}
+            </div>
+        </CardContent>
+      </Card>
 
     </div>
   );

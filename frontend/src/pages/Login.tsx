@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ArrowRight, Loader2, LockKeyhole } from "lucide-react";
-// IMPORT THE NEW 3D SCENE
-import LogisticScene from "@/components/SupplyChainNetwork";
+// 1. Import the new "QuantumLattice" component
+import QuantumLattice from "@/components/QuantumLattice";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -32,34 +32,32 @@ const Login = () => {
   return (
     <div className="min-h-screen w-full grid lg:grid-cols-2 bg-black text-white font-sans selection:bg-sky-500/30">
       
-      {/* --- LEFT SIDE: 3D LOGISTICS SIMULATION --- */}
+      {/* --- LEFT SIDE: THE GROUNDBREAKING 3D VISUAL --- */}
       <div className="hidden lg:flex flex-col justify-between p-12 relative overflow-hidden bg-zinc-900">
          
-         {/* THE REAL-TIME 3D CODE */}
-         {/* This renders the interactive warehouse scene */}
-         <LogisticScene />
+         {/* THE NEW 3D COMPONENT */}
+         <QuantumLattice />
+
+         {/* Optional subtle overlay to ensure text is readable if the glow is too bright */}
+         <div className="absolute inset-0 bg-black/20 pointer-events-none z-0"></div>
         
         {/* LOGO (Floats above the 3D scene) */}
         <div className="relative z-10 pointer-events-none">
             <img 
               src="/Orion_impAct/logo1.png" 
               alt="impAct Logo" 
-              className="h-12 w-auto object-contain drop-shadow-[0_0_20px_rgba(0,0,0,0.8)]" 
+              // Increased drop shadow to pop against the bright 3D element
+              className="h-12 w-auto object-contain drop-shadow-[0_0_30px_rgba(0,0,0,1)]" 
             />
         </div>
         
         {/* QUOTE (Floats above the 3D scene) */}
         <div className="relative z-10 max-w-lg mb-10 pointer-events-none">
-          {/* Added a glass blur box behind text to make it readable over the 3D scene */}
-          <div className="p-6 rounded-2xl bg-black/40 backdrop-blur-md border border-white/5">
-            <blockquote className="text-3xl font-medium text-white leading-tight tracking-tight">
-                "impAct gives us the clarity we need in a chaotic global market. It's not just data; it's foresight."
-            </blockquote>
-          </div>
+          
         </div>
       </div>
 
-      {/* --- RIGHT SIDE: LOGIN FORM --- */}
+      {/* --- RIGHT SIDE: LOGIN FORM (Unchanged) --- */}
       <div className="flex items-center justify-center p-8 relative bg-black">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
 

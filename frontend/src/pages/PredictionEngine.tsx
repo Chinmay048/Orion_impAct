@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
     Activity, 
-    TrendingUp, 
     Sliders, 
     Loader2, 
     AlertTriangle, 
@@ -12,7 +11,8 @@ import {
     Package, 
     Zap, 
     ShieldAlert, 
-    Search
+    Search,
+    BrainCircuit // New icon for AI
 } from "lucide-react";
 
 // --- 1. THE "DNA" LAYER (Genuine Logic Parameters) ---
@@ -55,7 +55,7 @@ export default function PredictionEngine() {
     setLoading(true);
     setResult(null); // Clear previous result
 
-    // Simulate Processing Delay for realism
+    // Simulate Processing Delay for realism (and to show off the loader)
     setTimeout(() => {
         // A. Get the unique traits for the selected item
         const dna = COMMODITY_DNA[selectedCommodity];
@@ -87,13 +87,13 @@ export default function PredictionEngine() {
         
         const recommendedQty = Math.round(baseQty * multiplier);
 
-        // E. AI Strategy Generation (Logic-Based)
+        // E. AI Strategy Generation (Context-Aware Logic)
         let actionPlan = [];
         if (scarcityRisk > 70) {
             actionPlan = [
                 `🚨 CRITICAL: ${selectedCommodity} supply chain is fragile (Risk: ${scarcityRisk}%).`,
-                `2. Diversify logistics. Dependence on ${source} is a bottleneck.`,
-                `3. Limit production batch sizes immediately.`
+                `2. Diversify logistics immediately. Dependence on ${source} is a bottleneck.`,
+                `3. Halt low-priority production lines to conserve ${selectedCommodity} stock.`
             ];
         } else if (elasticity > 1.3) {
             actionPlan = [
@@ -119,16 +119,18 @@ export default function PredictionEngine() {
         });
         
         setLoading(false);
-    }, 1000); 
+    }, 1500); 
   };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in pb-12">
-      <div className="border-b border-slate-200 dark:border-white/10 pb-6">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Activity className="w-8 h-8 text-emerald-500" /> Prediction Engine
+      
+      {/* HEADER */}
+      <div className="border-b border-white/10 pb-6">
+        <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+            <BrainCircuit className="w-8 h-8 text-emerald-500" /> Prediction Engine
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-zinc-400 mt-1">
             Hybrid Engine: Commodity DNA + Deterministic Math + Generative AI Strategy.
         </p>
       </div>
@@ -137,73 +139,84 @@ export default function PredictionEngine() {
         
         {/* LEFT: CONTROLS */}
         <div className="lg:col-span-1 space-y-6">
-          <Card className="p-6 bg-white dark:bg-neutral-900 border-slate-200 dark:border-white/10 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+          <Card className="p-6 bg-zinc-900/40 border-white/5 backdrop-blur-sm shadow-sm">
+            <h3 className="text-sm font-bold text-white mb-6 flex items-center gap-2">
                 <Sliders className="w-4 h-4" /> Parameters
             </h3>
             
             <div className="space-y-5">
                 <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500">Source Hub</label>
+                    <label className="text-xs font-bold text-zinc-500 uppercase">Source Hub</label>
                     <div className="relative">
                         <select 
-                            className="w-full p-2.5 rounded bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/20 dark:text-white text-sm appearance-none"
+                            className="w-full p-2.5 rounded bg-black border border-white/10 text-white text-sm focus:border-blue-500 outline-none appearance-none"
                             value={source} onChange={e => setSource(e.target.value)}
                         >
-                            {MARKETS.map(m => <option key={m}>{m}</option>)}
+                            {MARKETS.map(m => (
+                                <option key={m} value={m} className="bg-zinc-900 text-white">
+                                    {m}
+                                </option>
+                            ))}
                         </select>
                     </div>
                 </div>
                 
                 <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500">Commodity (DNA Active)</label>
-                    <select 
-                        className="w-full p-3 rounded bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-500/30 dark:text-white font-medium text-sm"
-                        value={selectedCommodity} onChange={e => setSelectedCommodity(e.target.value)}
-                    >
-                        {Object.keys(COMMODITY_DNA).map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <p className="text-[10px] text-indigo-500 font-medium mt-1">
-                        *Changing this alters algorithmic sensitivity.
+                    <label className="text-xs font-bold text-zinc-500 uppercase">Commodity (DNA Active)</label>
+                    <div className="relative">
+                        <select 
+                            className="w-full p-3 rounded bg-blue-900/10 border border-blue-500/20 text-white font-medium text-sm focus:border-blue-500 outline-none appearance-none"
+                            value={selectedCommodity} onChange={e => setSelectedCommodity(e.target.value)}
+                        >
+                            {Object.keys(COMMODITY_DNA).map(c => (
+                                <option key={c} value={c} className="bg-zinc-900 text-white">
+                                    {c}
+                                </option>
+                            ))}
+                        </select>
+                        <Zap className="absolute right-3 top-3 w-4 h-4 text-blue-500 pointer-events-none" />
+                    </div>
+                    <p className="text-[10px] text-blue-400 font-medium mt-1 flex items-center gap-1">
+                        <Activity className="w-3 h-3" /> DNA Loaded: Sensitivity {COMMODITY_DNA[selectedCommodity].sensitivity}
                     </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500">Inventory</label>
+                        <label className="text-xs font-bold text-zinc-500 uppercase">Inventory</label>
                         <Input 
                             type="number" 
                             value={inventory} 
                             onChange={e => setInventory(Number(e.target.value))} 
-                            className="dark:bg-black" 
+                            className="bg-black border-white/10 text-white" 
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500">Capacity</label>
+                        <label className="text-xs font-bold text-zinc-500 uppercase">Capacity</label>
                         <Input 
                             type="number" 
                             value={capacity} 
                             onChange={e => setCapacity(Number(e.target.value))} 
-                            className="dark:bg-black" 
+                            className="bg-black border-white/10 text-white" 
                         />
                     </div>
                 </div>
             </div>
 
-            <div className="space-y-6 mt-8 pt-6 border-t border-slate-100 dark:border-white/5">
+            <div className="space-y-6 mt-8 pt-6 border-t border-white/5">
                 <SliderControl label="Demand Strength" value={demandFactor} setValue={setDemandFactor} color="accent-blue-500" />
                 <SliderControl label="Supply Stability" value={supplyFactor} setValue={setSupplyFactor} color="accent-emerald-500" />
-                <SliderControl label="Price Trend" value={priceTrend} setValue={setPriceTrend} color="accent-amber-500" />
+                <SliderControl label="Price Trend" value={priceTrend} setValue={setPriceTrend} color="accent-yellow-500" />
             </div>
 
             <Button 
                 onClick={handlePredict} 
                 disabled={loading} 
-                className="w-full mt-6 h-12 bg-slate-900 dark:bg-white dark:text-black font-bold text-base shadow-lg hover:shadow-xl transition-all"
+                className="w-full mt-6 h-12 bg-white text-black hover:bg-zinc-200 font-bold text-base shadow-lg transition-all"
             >
                 {loading ? (
                     <div className="flex items-center gap-2">
-                        <Loader2 className="animate-spin w-5 h-5" /> Processing DNA...
+                        <Loader2 className="animate-spin w-5 h-5" /> Neural Processing...
                     </div>
                 ) : (
                     "Run AI Simulation"
@@ -216,20 +229,20 @@ export default function PredictionEngine() {
         <div className="lg:col-span-2 space-y-6">
             
             {/* ELASTICITY SCORE CARD */}
-            <Card className="p-8 bg-slate-900 text-white relative overflow-hidden border-slate-800 shadow-2xl">
-                <div className="absolute top-0 right-0 p-8 opacity-10">
-                    <Search className="w-48 h-48"/>
+            <Card className="p-8 bg-zinc-900 border-white/10 relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 right-0 p-8 opacity-5">
+                    <Search className="w-48 h-48 text-white"/>
                 </div>
                 
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-end gap-6">
                     <div>
-                        <p className="text-sm font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
+                        <p className="text-sm font-bold text-zinc-500 uppercase mb-2 flex items-center gap-2">
                             <Activity className="w-4 h-4" /> Calculated Elasticity Score
                         </p>
-                        <div className="text-7xl font-mono font-bold tracking-tighter">
+                        <div className="text-7xl font-mono font-bold tracking-tighter text-white">
                             {result ? result.elasticity : "0.00"}
                         </div>
-                        <p className="text-sm text-slate-500 mt-2">
+                        <p className="text-sm text-zinc-400 mt-2">
                             {result ? (
                                 result.elasticity > 1.3 ? "High Sensitivity detected. Market is volatile." : 
                                 "Market conditions stable for this commodity."
@@ -238,11 +251,11 @@ export default function PredictionEngine() {
                     </div>
 
                     <div className="text-right">
-                        <div className={`text-xl font-bold px-4 py-2 rounded-lg inline-flex items-center gap-2 ${
-                            !result ? 'bg-slate-800 text-slate-500' :
-                            result.impact === 'CRITICAL' ? 'bg-red-500 text-white' : 
-                            result.impact === 'HIGH' ? 'bg-amber-500 text-black' : 
-                            'bg-emerald-500 text-white'
+                        <div className={`text-xl font-bold px-4 py-2 rounded-lg inline-flex items-center gap-2 border ${
+                            !result ? 'bg-zinc-800 text-zinc-500 border-zinc-700' :
+                            result.impact === 'CRITICAL' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 
+                            result.impact === 'HIGH' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 
+                            'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                         }`}>
                             {result?.impact === 'CRITICAL' && <AlertTriangle className="w-5 h-5" />}
                             {result?.impact === 'LOW' && <CheckCircle2 className="w-5 h-5" />}
@@ -251,11 +264,11 @@ export default function PredictionEngine() {
                     </div>
                 </div>
 
-                <div className="w-full bg-slate-800 h-1.5 rounded-full mt-8 overflow-hidden">
+                <div className="w-full bg-zinc-800 h-1.5 rounded-full mt-8 overflow-hidden">
                     <div 
                         className={`h-full transition-all duration-1000 ease-out ${
                             result && result.elasticity > 1.3 ? 'bg-red-500' : 
-                            result && result.elasticity > 1.0 ? 'bg-amber-500' : 'bg-emerald-500'
+                            result && result.elasticity > 1.0 ? 'bg-yellow-500' : 'bg-emerald-500'
                         }`} 
                         style={{ width: result ? `${Math.min(100, result.elasticity * 40)}%` : '0%' }}
                     ></div>
@@ -266,7 +279,7 @@ export default function PredictionEngine() {
                 <MetricCard 
                     label="Scarcity Risk" 
                     value={result ? `${result.scarcityRisk}%` : "--"} 
-                    icon={<ShieldAlert className={`w-4 h-4 ${result?.scarcityRisk > 50 ? 'text-red-500' : 'text-slate-400'}`} />}
+                    icon={<ShieldAlert className={`w-4 h-4 ${result?.scarcityRisk > 50 ? 'text-red-500' : 'text-zinc-400'}`} />}
                 />
                 <MetricCard 
                     label="Rec. Order Qty" 
@@ -276,28 +289,29 @@ export default function PredictionEngine() {
                 <MetricCard 
                     label="AI Confidence" 
                     value={result ? `${result.confidence}%` : "--"} 
-                    icon={<Zap className="w-4 h-4 text-amber-500" />}
+                    icon={<Zap className="w-4 h-4 text-yellow-500" />}
                 />
             </div>
 
-            <Card className="p-6 bg-white dark:bg-neutral-900 border-slate-200 dark:border-white/10 min-h-[200px] shadow-sm">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-emerald-500" /> Strategic Action Plan (Generated by Gemini)
+            {/* ACTION PLAN */}
+            <Card className="p-6 bg-zinc-900/40 border-white/5 backdrop-blur-sm min-h-[200px] shadow-sm">
+                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-emerald-500" /> Strategic Action Plan
                 </h3>
                 
                 {!result ? (
-                    <div className="h-40 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-100 dark:border-white/5 rounded-lg">
+                    <div className="h-40 flex flex-col items-center justify-center text-zinc-500 border-2 border-dashed border-white/5 rounded-lg">
                         <Activity className="w-8 h-8 mb-2 opacity-50" />
                         <p className="text-sm">Run simulation to fetch AI insights</p>
                     </div>
                 ) : (
                     <div className="space-y-3 animate-in slide-in-from-bottom-4">
                         {result.actionPlan.map((step: string, i: number) => (
-                            <div key={i} className="flex gap-3 items-start p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
-                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400 flex items-center justify-center text-xs font-bold mt-0.5">
+                            <div key={i} className="flex gap-3 items-start p-3 bg-white/5 rounded-lg border border-white/5">
+                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 text-zinc-400 flex items-center justify-center text-xs font-bold mt-0.5">
                                     {i + 1}
                                 </span>
-                                <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
+                                <p className="text-sm text-zinc-300 font-medium leading-relaxed">
                                     {step.replace(/^\d+\.\s*/, '')}
                                 </p>
                             </div>
@@ -311,21 +325,20 @@ export default function PredictionEngine() {
   );
 }
 
-// --- HELPER COMPONENTS ---
+// Helper Components
 function SliderControl({ label, value, setValue, color }: any) {
     return (
         <div className="space-y-3">
             <div className="flex justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase">{label}</span>
-                <span className="text-xs font-bold dark:text-white">{value.toFixed(2)}</span>
+                <span className="text-xs font-bold text-zinc-500 uppercase">{label}</span>
+                <span className="text-xs font-bold text-white">{value.toFixed(2)}</span>
             </div>
             <input 
                 type="range" 
-                aria-label={label}
                 min="0.5" max="2.0" step="0.05" 
                 value={value} 
                 onChange={e => setValue(Number(e.target.value))} 
-                className={`w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer ${color}`}
+                className={`w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer ${color}`}
             />
         </div>
     );
@@ -333,12 +346,12 @@ function SliderControl({ label, value, setValue, color }: any) {
 
 function MetricCard({ label, value, icon }: any) {
     return (
-        <Card className="p-4 bg-white dark:bg-neutral-900 border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
+        <Card className="p-4 bg-zinc-900/40 border-white/5 backdrop-blur-sm shadow-sm flex flex-col justify-between hover:bg-zinc-900/60 transition-colors">
             <div className="flex justify-between items-start mb-2">
-                <p className="text-[10px] font-bold text-slate-500 uppercase">{label}</p>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase">{label}</p>
                 {icon}
             </div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white truncate">{value}</p>
+            <p className="text-2xl font-bold text-white truncate">{value}</p>
         </Card>
     );
 }

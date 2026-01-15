@@ -9,161 +9,127 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 
-// Logging Middleware
-app.use((req, res, next) => {
-    console.log(`[Request Received] ${req.method} ${req.path}`);
-    next();
-});
-
-const GEN_AI_KEY = "AIzaSyBpkyAgN1y658Gk_iVms-ye7iF2a4Z1TgY"; 
-const genAI = new GoogleGenerativeAI(GEN_AI_KEY);
-
-// --- SHARED DATA ---
-const COMPANY_PROFILE = {
-    name: "Tata Advanced Systems", sector: "Industrial Manufacturing", dailyUsage: 500, minStockLevel: 2000, currentStock: 12500,
-    productionHistory: [420, 450, 480, 470, 490, 510, 500], trackedMaterials: ["Industrial Steel", "Lithium Ion", "Titanium Alloy"]
+// --- 1. REALISTIC ROUTE DATABASE (Scaled for Demo) ---
+// Distances are relative. Time is in Milliseconds for the demo.
+// 1000ms = 1 second. 
+const ROUTE_MATRIX = {
+    "Mumbai HQ": {
+        "Delhi Hub": 60000,      // 1 min (Long)
+        "Pune Factory": 15000,   // 15 sec (Short - they are close)
+        "Chennai Port": 90000,   // 1.5 min
+        "Kolkata Yard": 120000   // 2 min
+    },
+    "Chennai Port": {
+        "Pune Factory": 45000,   // 45 sec (Medium)
+        "Delhi Hub": 100000,     // 1 min 40s
+        "Mumbai HQ": 50000       // 50 sec
+    },
+    "Global Supplier": {
+        "Chennai Port": 120000,  // 2 min (Sea Freight)
+        "Mumbai HQ": 110000,
+        "Delhi Hub": 150000
+    }
 };
 
+const DEFAULT_DURATION = 30000; // 30s default
+
+// --- 2. SHARED STATE ---
 let MARKETS = [
-    { name: "Mumbai HQ", region: "West", stock: 1450, capacity: 5000, status: "SHORTAGE", dailyUsage: 320, production: 280 },
-    { name: "Delhi Hub", region: "North", stock: 7800, capacity: 8000, status: "ADEQUATE", dailyUsage: 600, production: 650 },
-    { name: "Chennai Port", region: "South", stock: 2100, capacity: 4000, status: "WARNING", dailyUsage: 400, production: 350 },
-    { name: "Kolkata Yard", region: "East", stock: 5600, capacity: 7000, status: "ADEQUATE", dailyUsage: 450, production: 500 },
-    { name: "Pune Factory", region: "West", stock: 890, capacity: 3000, status: "CRITICAL", dailyUsage: 200, production: 100 }
+    { name: "Mumbai HQ", region: "West", stock: 1450, capacity: 5000, dailyUsage: 320 },
+    { name: "Delhi Hub", region: "North", stock: 7800, capacity: 8000, dailyUsage: 600 },
+    { name: "Chennai Port", region: "South", stock: 210, capacity: 4000, dailyUsage: 400 },
+    { name: "Kolkata Yard", region: "East", stock: 5600, capacity: 7000, dailyUsage: 450 },
+    { name: "Pune Factory", region: "West", stock: 890, capacity: 3000, dailyUsage: 200 }
 ];
 
 let COMMODITIES = [
-    { name: "Industrial Steel", basePrice: 450, volatility: "Low", sentiment: "Stable" }, 
-    { name: "Lithium Ion", basePrice: 1200, volatility: "High", sentiment: "Bullish" },
-    { name: "Microchips", basePrice: 8500, volatility: "Extreme", sentiment: "Critical" }, 
-    { name: "Copper Wire", basePrice: 720, volatility: "Medium", sentiment: "Bearish" },
-    { name: "Polymer Resin", basePrice: 180, volatility: "Low", sentiment: "Stable" }, 
-    { name: "Titanium Alloy", basePrice: 3100, volatility: "Medium", sentiment: "Bullish" }
+    { name: "Industrial Steel", basePrice: 450, yield: 0.95 }, 
+    { name: "Lithium Ion", basePrice: 1200, yield: 0.88 },
+    { name: "Microchips", basePrice: 8500, yield: 0.99 }, 
+    { name: "Copper Wire", basePrice: 720, yield: 0.92 },
+    { name: "Polymer Resin", basePrice: 180, yield: 0.85 }, 
+    { name: "Titanium Alloy", basePrice: 3100, yield: 0.97 }
 ];
 
-const GLOBAL_EVENTS = [
-    { id: 1, title: "Port Workers Strike in Chennai", type: "Disruption", severity: "High", affected: "Lithium Ion", time: "2h ago" },
-    { id: 2, title: "New Semiconductor Fab opening in Gujarat", type: "Opportunity", severity: "Medium", affected: "Microchips", time: "5h ago" },
-    { id: 3, title: "Steel Import Tariffs Hiked by 10%", type: "Regulation", severity: "High", affected: "Industrial Steel", time: "1d ago" },
-    { id: 4, title: "Monsoon floods delay Copper shipments", type: "Weather", severity: "Medium", affected: "Copper Wire", time: "1d ago" }
-];
-
-const SHIPMENTS = [
-    { id: "SHP-9001", origin: "Mumbai HQ", dest: "Delhi Hub", status: "In Transit", progress: 65, eta: "4h 20m", vehicle: "EV-Truck X1", carbon: 12.5, carbonSaved: 4.2 },
-    { id: "SHP-9002", origin: "Chennai Port", dest: "Pune Factory", status: "Delayed", progress: 30, eta: "14h 10m", vehicle: "Diesel Cargo", carbon: 45.1, carbonSaved: 0 },
-    { id: "SHP-9003", origin: "Kolkata Yard", dest: "Mumbai HQ", status: "Customs", progress: 85, eta: "2h 05m", vehicle: "Rail Freight", carbon: 8.2, carbonSaved: 15.3 },
-    { id: "SHP-9004", origin: "Delhi Hub", dest: "Pune Factory", status: "Scheduled", progress: 0, eta: "Pending", vehicle: "EV-Fleet", carbon: 0, carbonSaved: 0 }
+// Pre-load shipments with realistic routes
+let SHIPMENTS = [
+    { 
+        id: "SHP-TASL-09", 
+        origin: "Chennai Port", 
+        dest: "Pune Factory", 
+        status: "In Transit", 
+        progress: 60, 
+        eta: "00:45", 
+        vehicle: "Tata Prima 5530.S", 
+        cargo: "Titanium Alloy", 
+        quantity: 500, 
+        startTime: Date.now() - 30000, 
+        arrivalTime: Date.now() + 45000, 
+        carbon: 18.5,
+        velocity: "68 km/h"
+    }
 ];
 
 // --- ENDPOINTS ---
 
-app.get('/api/company-stats', (req, res) => {
-    const daysLeft = (COMPANY_PROFILE.currentStock / COMPANY_PROFILE.dailyUsage).toFixed(1);
-    const liveMaterials = COMMODITIES.filter(c => COMPANY_PROFILE.trackedMaterials.includes(c.name)).map(c => ({
-        name: c.name, price: (c.basePrice * (1 + (Math.random() * 0.04 - 0.02))).toFixed(2),
-        change: ((Math.random() * 0.04 - 0.02) * 100).toFixed(2), trend: Math.random() > 0.5 ? "up" : "down"
-    }));
-    res.json({ profile: COMPANY_PROFILE, runway: { days: daysLeft, status: daysLeft < 10 ? "CRITICAL" : "HEALTHY" }, materials: liveMaterials, riskScore: Math.floor(Math.random() * 15) + 10 });
-});
-
-app.get('/api/markets', (req, res) => {
-    const liveMarkets = MARKETS.map(m => {
-        let status = "ADEQUATE";
-        const ratio = m.stock / m.capacity;
-        if (ratio < 0.3) status = "CRITICAL"; 
-        else if (ratio < 0.5) status = "WARNING";
-        return { ...m, status };
-    });
-    res.json(liveMarkets);
-});
-
+app.get('/api/markets', (req, res) => res.json(MARKETS.map(m => ({ ...m, status: m.stock/m.capacity < 0.3 ? "CRITICAL" : "ADEQUATE" }))));
 app.get('/api/commodities', (req, res) => res.json(COMMODITIES));
+app.get('/api/logistics', (req, res) => res.json(SHIPMENTS));
 
-app.post('/api/inventory/update', (req, res) => {
-    const { market, quantity, action } = req.body;
-    const m = MARKETS.find(m => m.name === market);
-    if (m) {
-        if (quantity) {
-            const qtyNum = Number(quantity);
-            if (action === "ADD") m.stock += qtyNum;
-            else m.stock = Math.max(0, m.stock - qtyNum);
-        }
-        res.json({ success: true, market: m });
-    } else res.status(404).json({ success: false });
-});
-
-app.post('/api/predict-gemini', async (req, res) => {
-    const { commodity, inventory, capacity, demandFactor, supplyFactor, priceTrend } = req.body;
-    const safeSupply = Number(supplyFactor) < 0.1 ? 0.1 : Number(supplyFactor);
-    const elasticity = (Number(demandFactor) / safeSupply) * Number(priceTrend);
-    const safeCapacity = Number(capacity) || 1;
-    const fillRate = Number(inventory) / safeCapacity;
-    const scarcityRisk = Math.max(0, Math.min(100, Math.round((1 - fillRate) * 100)));
-    let recommendedQty = 0;
+// SMART ORDERING ENGINE
+app.post('/api/order/place', (req, res) => {
+    const { market, quantity, material } = req.body;
     
-    if (elasticity > 1.2) recommendedQty = Math.round(Number(inventory) * 2.5);
-    else if (elasticity < 0.8) recommendedQty = 0;
-    else recommendedQty = Math.round(Number(inventory) * 0.8);
+    // 1. Determine Origin (Logic: Find a source that isn't the destination)
+    // For demo, we usually import from Ports or Global Suppliers
+    let origin = "Global Supplier";
+    if (market !== "Chennai Port") origin = "Chennai Port";
+    if (market === "Chennai Port") origin = "Mumbai HQ";
 
-    let actionPlan = [];
-    try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const prompt = `Act as a Logistics AI. Commodity: ${commodity}. Elasticity: ${elasticity.toFixed(2)}. Scarcity Risk: ${scarcityRisk}%. Write 4 short, imperative action steps. No markdown.`;
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-        actionPlan = text.split('\n').filter(line => line.trim().length > 0).slice(0, 4);
-    } catch (error) {
-        // Fallback
-        if (elasticity > 1.2) actionPlan = ["1. Trigger emergency bulk procurement.", "2. Secure alternative freight carriers.", "3. Lock in current prices immediately.", "4. Alert production of incoming surplus."];
-        else actionPlan = ["1. Maintain current stock levels.", "2. Monitor market prices for dips.", "3. Optimize warehouse storage layout.", "4. Review supplier lead times."];
+    // 2. Calculate Duration based on Real-World Distance Logic
+    let travelTime = DEFAULT_DURATION;
+    if (ROUTE_MATRIX[origin] && ROUTE_MATRIX[origin][market]) {
+        travelTime = ROUTE_MATRIX[origin][market];
+    } else if (ROUTE_MATRIX["Global Supplier"][market]) {
+        origin = "Global Supplier";
+        travelTime = ROUTE_MATRIX["Global Supplier"][market];
     }
-    res.json({ success: true, metrics: { elasticity: elasticity.toFixed(3), scarcityRisk, recommendedQty, confidence: 96 }, actionPlan });
+
+    const now = Date.now();
+    
+    const newShipment = {
+        id: `ORD-${Math.floor(Math.random() * 9000) + 1000}`,
+        origin: origin,
+        dest: market,
+        status: "In Transit",
+        progress: 0,
+        vehicle: origin === "Global Supplier" ? "C-130J Hercules" : "Tata Prima 5530.S",
+        cargo: material,
+        quantity: Number(quantity),
+        startTime: now,
+        arrivalTime: now + travelTime,
+        carbon: (Math.random() * 50 + 10).toFixed(1),
+        velocity: origin === "Global Supplier" ? "450 km/h" : "72 km/h"
+    };
+
+    SHIPMENTS.unshift(newShipment); 
+    res.json({ success: true, shipment: newShipment });
 });
 
-app.get('/api/market-sensing', (req, res) => {
-    const richData = COMMODITIES.map(c => {
-        const history = [];
-        let currentPrice = c.basePrice;
-        for (let i = 0; i < 7; i++) {
-            const volatilityFactor = c.volatility === "High" ? 0.08 : c.volatility === "Extreme" ? 0.15 : 0.02;
-            const change = (Math.random() * volatilityFactor * 2) - volatilityFactor;
-            currentPrice = currentPrice * (1 + change);
-            history.push(currentPrice);
-        }
-        const events = GLOBAL_EVENTS.filter(e => e.affected === c.name || e.affected === "All");
-        return { ...c, history, events };
-    });
-    res.json({ marketData: richData, globalFeed: GLOBAL_EVENTS });
-});
-
-app.get('/api/logistics', (req, res) => {
-    res.json(SHIPMENTS);
-});
-
-// FIX: Correct path for analytics
-app.get('/api/analytics', (req, res) => {
-    res.json({
-        kpis: { spend: "₹1.2Cr", efficiency: 94.2, riskIndex: 12, sustainability: 88 },
-        radar: {
-            labels: ['Resilience', 'Cost Efficiency', 'Speed', 'Sustainability', 'Reliability'],
-            current: [85, 70, 90, 65, 88], 
-            simulated: [60, 40, 50, 40, 50] 
-        },
-        costTrend: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            actual: [45, 47, 46, 48, 52, 51],
-            predicted: [45.5, 46.5, 47, 47.5, 48, 48.5]
-        },
-        anomalies: [
-            { id: 1, type: "Cost Spike", msg: "Logistics fuel surcharge +15% vs Forecast", severity: "High" },
-            { id: 2, type: "Inventory Leak", msg: "Stock discrepancy in Pune Factory", severity: "Medium" }
-        ]
-    });
-});
-
-app.get('/api/alerts', (req, res) => {
-    res.json([]);
+app.post('/api/shipment/receive', (req, res) => {
+    const { id } = req.body;
+    const idx = SHIPMENTS.findIndex(s => s.id === id);
+    if (idx > -1) {
+        const s = SHIPMENTS[idx];
+        const m = MARKETS.find(x => x.name === s.dest);
+        if (m) m.stock = Math.min(m.capacity, m.stock + Number(s.quantity));
+        
+        SHIPMENTS[idx].status = "Delivered";
+        SHIPMENTS[idx].progress = 100;
+        res.json({ success: true });
+    } else {
+        res.json({ success: false });
+    }
 });
 
 app.listen(port, () => console.log(`Backend Active on Port ${port}`));
