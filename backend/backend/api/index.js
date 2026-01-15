@@ -131,5 +131,9 @@ app.post('/api/shipment/receive', (req, res) => {
         res.json({ success: false });
     }
 });
+app.get('/api/health', (req, res) => {
+    console.log('Heartbeat received 💓');
+    res.status(200).send('OK');
+});
 
 app.listen(port, () => console.log(`Backend Active on Port ${port}`));
