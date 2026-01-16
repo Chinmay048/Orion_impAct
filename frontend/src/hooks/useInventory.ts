@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // ⚠️ Ensure this matches your Backend URL
-const API_URL = "https://orion-backend-op6i.onrender.com"; 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+ 
 
 export const useInventory = () => {
   return useQuery({

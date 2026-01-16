@@ -6,6 +6,8 @@ import {
   PackageCheck
 } from "lucide-react";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 export default function LogisticsHub() {
   const [shipments, setShipments] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
@@ -16,7 +18,7 @@ export default function LogisticsHub() {
   // --- FETCH & SYNC DATA ---
   const fetchData = async () => {
     try {
-        const res = await fetch("http://localhost:3000/api/logistics");
+        const res = await fetch(`${API_URL}/api/logistics`);
         if (res.ok) {
             const data = await res.json();
             // Filter: Only show Active or Recently Delivered
@@ -80,7 +82,7 @@ export default function LogisticsHub() {
   }, [selectedId, shipments]);
 
   const handleDelivery = async (id: string) => {
-      await fetch("http://localhost:3000/api/shipment/receive", {
+      await fetch(`${API_URL}/api/shipment/receive`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id })

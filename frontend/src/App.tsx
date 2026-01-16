@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-// 1. CHANGE IMPORT: Switch BrowserRouter to HashRouter
-import { HashRouter, Routes, Route, Navigate } from "react-router-dom"; 
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"; 
 import React from "react"; 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
@@ -27,8 +26,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      {/* 2. CHANGE COMPONENT: Use HashRouter here */}
-      <HashRouter>
+      <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
@@ -51,7 +49,7 @@ export default function App() {
 
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </HashRouter>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }

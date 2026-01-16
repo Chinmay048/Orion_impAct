@@ -52,7 +52,7 @@ export const DashboardLayout = () => {
         {/* LOGO */}
         <div className="h-16 flex items-center px-6 border-b border-white/5">
              <img 
-                src="/Orion_impAct/logo1.png" 
+                src="/logo1.png" 
                 alt="impAct Logo" 
                 className="h-8 w-auto object-contain drop-shadow-[0_0_15px_rgba(56,189,248,0.5)] cursor-pointer hover:scale-105 transition-transform"
                 onClick={() => navigate("/dashboard")}

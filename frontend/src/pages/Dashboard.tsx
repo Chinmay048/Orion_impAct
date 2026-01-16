@@ -32,6 +32,8 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState(false);
@@ -39,7 +41,7 @@ export default function Dashboard() {
   const fetchData = async () => {
     try {
       setError(false);
-      const res = await fetch("https://orion-backend-op6i.onrender.com/api/company-stats");
+      const res = await fetch(`${API_URL}/api/company-stats`);
       if (!res.ok) throw new Error("Server Error");
       const json = await res.json();
       console.log("DASHBOARD DATA:", json); 

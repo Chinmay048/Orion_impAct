@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { 
   Loader2, Package, ShoppingCart, Factory, MapPin, 
   AlertOctagon, Check, Box, ArrowRight, 
-  Truck, Archive, TrendingDown, Clock, Calculator
+  Truck, Archive, TrendingDown, Clock
 } from "lucide-react";
 
 export default function InventoryManager() {
@@ -22,14 +22,15 @@ export default function InventoryManager() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   
-  const API_URL = "https://orion-backend-op6i.onrender.com/api"; 
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+ 
 
   // --- DATA FETCHING ---
   const fetchData = async () => {
     try {
-        const mRes = await fetch(`${API_URL}/markets`);
-        const cRes = await fetch(`${API_URL}/commodities`);
-        const lRes = await fetch(`${API_URL}/logistics`);
+        const mRes = await fetch(`${API_URL}/api/markets`);
+        const cRes = await fetch(`${API_URL}/api/commodities`);
+        const lRes = await fetch(`${API_URL}/api/logistics`);
         
         if (mRes.ok) setMarkets(await mRes.json());
         if (cRes.ok) setCommodities(await cRes.json());
@@ -74,7 +75,7 @@ export default function InventoryManager() {
     const mat = selectedCommodity || "Industrial Steel"; 
 
     // This simply adds to the Logistics Queue. Stock is NOT updated yet.
-    await fetch(`${API_URL}/order/place`, {
+    await fetch(`${API_URL}/api/order/place`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ market: hub, quantity: qty, material: mat })
@@ -91,7 +92,7 @@ export default function InventoryManager() {
   const handleWriteOff = async () => {
       if (!selectedMarket || !quantity) return;
       setLoading(true);
-      await fetch(`${API_URL}/inventory/adjust`, {
+      await fetch(`${API_URL}/api/inventory/adjust`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ market: selectedMarket, quantity: quantity, action: "REMOVE" })
@@ -105,7 +106,7 @@ export default function InventoryManager() {
 
   // 3. AUTO-RECEIVE (The "Arrival" Logic)
   const handleArrival = async (id: string) => {
-      await fetch(`${API_URL}/shipment/receive`, {
+      await fetch(`${API_URL}/api/shipment/receive`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id })

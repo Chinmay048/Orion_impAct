@@ -51,6 +51,17 @@ let COMMODITIES = [
     { name: "Titanium Alloy", basePrice: 3100, yield: 0.97 }
 ];
 
+// 3. COMPANY PROFILE
+const COMPANY_PROFILE = {
+    name: "Tata Advanced Systems",
+    sector: "Industrial Manufacturing",
+    dailyUsage: 500,
+    minStockLevel: 2000,
+    currentStock: 12500,
+    productionHistory: [420, 450, 480, 470, 490, 510, 500],
+    trackedMaterials: ["Industrial Steel", "Lithium Ion", "Titanium Alloy"]
+};
+
 // Pre-load shipments with realistic routes
 let SHIPMENTS = [
     { 
@@ -71,6 +82,35 @@ let SHIPMENTS = [
 ];
 
 // --- ENDPOINTS ---
+
+app.get('/api/company-stats', (req, res) => {
+    const daysLeft = (COMPANY_PROFILE.currentStock / COMPANY_PROFILE.dailyUsage).toFixed(1);
+    const liveMaterials = COMMODITIES.filter(c => COMPANY_PROFILE.trackedMaterials.includes(c.name)).map(c => ({
+        name: c.name, price: (c.basePrice * (1 + (Math.random() * 0.04 - 0.02))).toFixed(2),
+        change: ((Math.random() * 0.04 - 0.02) * 100).toFixed(2), trend: Math.random() > 0.5 ? "up" : "down"
+    }));
+    
+    // Production Output for Material Efficiency Matrix
+    const productionOutput = COMMODITIES.filter(c => COMPANY_PROFILE.trackedMaterials.includes(c.name)).map(c => {
+        const usage = Math.floor(Math.random() * 500) + 200; // Random usage 200-700 kg
+        const efficiency = c.yield || (Math.random() * 0.15 + 0.85); // 85-100% efficiency
+        const outputGenerated = Math.floor(usage * efficiency);
+        return {
+            material: c.name,
+            usage: usage,
+            efficiency: `${(efficiency * 100).toFixed(1)}%`,
+            outputGenerated: outputGenerated
+        };
+    });
+    
+    res.json({ 
+        profile: COMPANY_PROFILE, 
+        runway: { days: daysLeft, status: daysLeft < 10 ? "CRITICAL" : "HEALTHY" }, 
+        materials: liveMaterials, 
+        riskScore: Math.floor(Math.random() * 15) + 10,
+        productionOutput: productionOutput
+    });
+});
 
 app.get('/api/markets', (req, res) => res.json(MARKETS.map(m => ({ ...m, status: m.stock/m.capacity < 0.3 ? "CRITICAL" : "ADEQUATE" }))));
 app.get('/api/commodities', (req, res) => res.json(COMMODITIES));
