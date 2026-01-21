@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { 
   Truck, Navigation, Leaf, CheckCircle2, 
   AlertTriangle, Wind, Box, Clock,
-  PackageCheck
+  PackageCheck, Share2, Zap, Loader2
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -14,6 +15,10 @@ export default function LogisticsHub() {
   const [timeLeft, setTimeLeft] = useState<string>("--:--");
   const [progress, setProgress] = useState(0);
   const [nextDelivery, setNextDelivery] = useState<any>(null);
+  
+  // State to track optimizations per shipment ID
+  const [optimizationState, setOptimizationState] = useState<Record<string, any>>({});
+  const [isOptimizing, setIsOptimizing] = useState(false);
 
   // --- FETCH & SYNC DATA ---
   const fetchData = async () => {
@@ -23,17 +28,15 @@ export default function LogisticsHub() {
             const data = await res.json();
             // Filter: Only show Active or Recently Delivered
             const activeData = data.filter((s: any) => s.status !== 'Delivered')
-                                   .sort((a:any, b:any) => a.arrivalTime - b.arrivalTime);
+                                    .sort((a:any, b:any) => a.arrivalTime - b.arrivalTime);
             
             setShipments(activeData);
             
             // Auto-select logic
             if (activeData.length > 0) {
-                // If nothing selected, or selected item is gone/delivered, select first
                 if (!selectedId || !activeData.find((s:any) => s.id === selectedId)) {
                     setSelectedId(activeData[0].id);
                 }
-                // Set Next Delivery (2nd item in list)
                 setNextDelivery(activeData.length > 1 ? activeData[1] : null);
             } else {
                 setNextDelivery(null);
@@ -61,23 +64,20 @@ export default function LogisticsHub() {
               if (remaining <= 0) {
                   setTimeLeft("ARRIVED");
                   setProgress(100);
-                  // Trigger backend to add stock if it just arrived
                   if (activeShipment.status !== "Delivered") {
                       handleDelivery(activeShipment.id);
                   }
               } else {
-                  // Format Time MM:SS
                   const minutes = Math.floor((remaining / 1000 / 60) % 60);
                   const seconds = Math.floor((remaining / 1000) % 60);
                   setTimeLeft(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
                   
-                  // Calculate Progress %
                   const elapsed = now - activeShipment.startTime;
                   const pct = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
                   setProgress(pct);
               }
           }
-      }, 100); // Fast updates for smooth bar
+      }, 100); 
       return () => clearInterval(timer);
   }, [selectedId, shipments]);
 
@@ -87,10 +87,62 @@ export default function LogisticsHub() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id })
       });
-      // Force refresh will happen via the main interval or next tick
+  };
+
+  // --- ECO-OPTIMIZATION LOGIC ---
+  const handleOptimizeRoute = () => {
+    if (!selectedId) return;
+    setIsOptimizing(true);
+
+    const current = shipments.find(s => s.id === selectedId);
+    if (!current) {
+        setIsOptimizing(false);
+        return;
+    }
+
+    // 1. Search for CONSOLIDATION opportunities
+    // Logic: Look for another shipment with same Origin & Destination that isn't the current one
+    const consolidationMatch = shipments.find(s => 
+        s.id !== current.id && 
+        s.origin === current.origin && 
+        s.dest === current.dest
+    );
+
+    setTimeout(() => {
+        let result;
+
+        if (consolidationMatch) {
+            // SCENARIO A: Consolidation Found
+            result = {
+                type: 'CONSOLIDATED',
+                message: `Merged with Fleet #${consolidationMatch.id}`,
+                vehicle: `${consolidationMatch.vehicle} (Shared)`,
+                carbon: (current.carbon || 100) * 0.4, // 60% reduction due to shared vehicle
+                offset: (4.2 + (current.carbon * 0.6)).toFixed(1),
+                details: "Capacity found in existing transit."
+            };
+        } else {
+            // SCENARIO B: No Match, apply Eco-Routing Algo
+            result = {
+                type: 'ECO_ROUTE',
+                message: 'Green Corridor Route Applied',
+                vehicle: current.vehicle,
+                carbon: (current.carbon || 100) * 0.85, // 15% reduction
+                offset: (4.2 + (current.carbon * 0.15)).toFixed(1),
+                details: "Route optimized for fuel efficiency."
+            };
+        }
+
+        setOptimizationState(prev => ({
+            ...prev,
+            [selectedId]: result
+        }));
+        setIsOptimizing(false);
+    }, 1500); // Simulate calculation delay
   };
 
   const selected = shipments.find(s => s.id === selectedId) || shipments[0];
+  const optData = optimizationState[selectedId]; // Get optimization data if it exists
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in pb-12">
@@ -130,9 +182,13 @@ export default function LogisticsHub() {
                             <div>
                                 <h3 className="font-bold text-white flex items-center gap-2 font-mono">
                                     {shp.id}
-                                    {shp.status === 'Delayed' && <AlertTriangle className="w-3 h-3 text-red-500 animate-pulse" />}
+                                    {/* Show Icon if Optimized */}
+                                    {optimizationState[shp.id]?.type === 'CONSOLIDATED' && <Share2 className="w-3 h-3 text-purple-400" />}
+                                    {optimizationState[shp.id]?.type === 'ECO_ROUTE' && <Leaf className="w-3 h-3 text-emerald-400" />}
                                 </h3>
-                                <p className="text-xs text-zinc-500 mt-1">{shp.vehicle}</p>
+                                <p className="text-xs text-zinc-500 mt-1">
+                                    {optimizationState[shp.id]?.vehicle || shp.vehicle}
+                                </p>
                             </div>
                             <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase border ${
                                 shp.status === 'In Transit' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
@@ -176,9 +232,20 @@ export default function LogisticsHub() {
                                 <p className="text-sm text-zinc-400 flex items-center gap-2">
                                     <Navigation className="w-3 h-3 text-blue-500" /> {selected?.origin || "--"} <span className="opacity-50">➔</span> {selected?.dest || "--"}
                                 </p>
-                                <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded border border-white/10">
-                                    <Box className="w-3 h-3 text-zinc-400" />
-                                    <span className="text-xs text-zinc-300 font-mono">{selected?.cargo || "No Active Shipment"} ({selected?.quantity || 0}T)</span>
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded border border-white/10">
+                                        <Box className="w-3 h-3 text-zinc-400" />
+                                        <span className="text-xs text-zinc-300 font-mono">{selected?.cargo || "No Shipment"} ({selected?.quantity || 0}T)</span>
+                                    </div>
+                                    {/* Dynamic Badge based on Optimization */}
+                                    {optData && (
+                                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded border animate-in fade-in slide-in-from-left-2 ${
+                                            optData.type === 'CONSOLIDATED' ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                        }`}>
+                                            {optData.type === 'CONSOLIDATED' ? <Share2 className="w-3 h-3" /> : <Leaf className="w-3 h-3" />}
+                                            <span className="text-xs font-bold uppercase">{optData.message}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div className="text-right">
@@ -201,16 +268,52 @@ export default function LogisticsHub() {
                             <TimelineNode label="Delivered" completed={progress >= 100} />
                         </div>
 
-                        {/* Stats Footer */}
-                        <div className="grid grid-cols-3 gap-6 mt-12 pt-6 border-t border-white/5">
-                            <StatBox label="Vehicle Velocity" value={selected?.velocity || "--"} icon={<Wind className="w-4 h-4 text-blue-400" />} />
-                            <StatBox label="Carbon Emission" value={`${selected?.carbon || 0} kg`} icon={<Leaf className="w-4 h-4 text-red-400" />} />
-                            <StatBox label="Offset Saved" value="4.2 kg" icon={<CheckCircle2 className="w-4 h-4 text-emerald-400" />} />
+                        {/* Stats Footer & Optimization Controls */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 pt-6 border-t border-white/5 items-center">
+                            
+                            {/* COL 1: Optimization Action (Replaces Velocity) */}
+                            <div>
+                                {optData ? (
+                                    <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                                        <div className="text-xs text-emerald-400 font-bold uppercase flex items-center gap-2 mb-1">
+                                            <CheckCircle2 className="w-3 h-3"/> Optimization Active
+                                        </div>
+                                        <div className="text-[10px] text-zinc-400 leading-tight">
+                                            {optData.details}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <Button 
+                                        onClick={handleOptimizeRoute}
+                                        disabled={isOptimizing || !selected}
+                                        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-900/20 transition-all active:scale-95"
+                                    >
+                                        {isOptimizing ? <Loader2 className="w-4 h-4 animate-spin"/> : <Zap className="w-4 h-4 mr-2"/>}
+                                        {isOptimizing ? "Analyzing Fleet..." : "Reduce Carbon Impact"}
+                                    </Button>
+                                )}
+                            </div>
+
+                            {/* COL 2: Carbon Emission (Dynamic) */}
+                            <StatBox 
+                                label="Carbon Emission" 
+                                value={`${optData ? Math.round(optData.carbon) : selected?.carbon || 0} kg`} 
+                                icon={<Leaf className={`w-4 h-4 ${optData ? 'text-emerald-400' : 'text-zinc-400'}`} />} 
+                                highlight={!!optData}
+                            />
+
+                            {/* COL 3: Offset Saved (Dynamic) */}
+                            <StatBox 
+                                label="Offset Saved" 
+                                value={`${optData ? optData.offset : "4.2"} kg`} 
+                                icon={<CheckCircle2 className={`w-4 h-4 ${optData ? 'text-emerald-400' : 'text-zinc-400'}`} />} 
+                                highlight={!!optData}
+                            />
                         </div>
                     </div>
                 </Card>
 
-                {/* 2. NEXT ORDER ELEMENT (NEW) */}
+                {/* 2. NEXT ORDER ELEMENT */}
                 {nextDelivery && (
                     <Card className="p-4 bg-zinc-900 border-white/10 flex items-center justify-between animate-in slide-in-from-bottom-2">
                         <div className="flex items-center gap-4">
@@ -252,13 +355,13 @@ function TimelineNode({ label, completed, current }: any) {
     );
 }
 
-function StatBox({ label, value, icon }: any) {
+function StatBox({ label, value, icon, highlight }: any) {
     return (
-        <div>
-            <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase mb-1">
+        <div className={`transition-colors duration-500 ${highlight ? 'bg-emerald-500/5 p-2 rounded-lg border border-emerald-500/10' : ''}`}>
+            <div className={`flex items-center gap-2 text-[10px] font-bold uppercase mb-1 ${highlight ? 'text-emerald-400' : 'text-zinc-500'}`}>
                 {icon} {label}
             </div>
-            <div className="text-xl font-mono text-white tracking-tight">{value}</div>
+            <div className={`text-xl font-mono tracking-tight ${highlight ? 'text-emerald-300' : 'text-white'}`}>{value}</div>
         </div>
     );
 }

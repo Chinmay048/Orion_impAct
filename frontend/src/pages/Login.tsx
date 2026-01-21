@@ -44,7 +44,8 @@ const Login = () => {
         {/* LOGO (Floats above the 3D scene) */}
         <div className="relative z-10 pointer-events-none">
             <img 
-              src="/Orion_impAct/logo1.png" 
+              /* FIXED PATH: Points to public root */
+              src="/logo1.png" 
               alt="impAct Logo" 
               // Increased drop shadow to pop against the bright 3D element
               className="h-12 w-auto object-contain drop-shadow-[0_0_30px_rgba(0,0,0,1)]" 

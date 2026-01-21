@@ -23,8 +23,8 @@ const Landing = () => {
           {/* LOGO */}
           <div className="flex items-center gap-4">
             <img 
-              src="/Orion_impAct/logo1.png" 
-              alt="impAct Logo" 
+              src="/logo1.png" 
+              alt="impAct Logo"
               // Sized for professional look (h-12 is ~48px)
               className="h-12 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]" 
             />
@@ -70,13 +70,24 @@ const Landing = () => {
         </p>
 
         {/* CTA Buttons */}
+        {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
           <Link to="/login">
             <Button size="lg" className="w-full sm:w-auto bg-white text-black hover:bg-zinc-200 font-bold px-8 h-12 rounded-full text-lg shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]">
               Launch Console <Zap className="w-4 h-4 ml-2 fill-black" />
             </Button>
           </Link>
-          <Button variant="outline" size="lg" className="w-full sm:w-auto border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/20 h-12 rounded-full text-lg backdrop-blur-sm">
+          
+          {/* TOP 1% FIX: 
+              We use onClick with window.open for external links on Buttons 
+              to keep the DOM valid (no <button> inside <a>).
+          */}
+          <Button 
+            variant="outline" 
+            size="lg" 
+            onClick={() => window.open("https://youtu.be/E69dtDwLTmE", "_blank")}
+            className="w-full sm:w-auto border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/20 h-12 rounded-full text-lg backdrop-blur-sm transition-all hover:scale-105"
+          >
             Watch Demo
           </Button>
         </div>
