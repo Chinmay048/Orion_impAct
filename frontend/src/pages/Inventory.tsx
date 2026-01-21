@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { 
   Loader2, Package, Factory, Check, Box, ArrowRight, 
-  Truck, Archive, TrendingDown, Clock, ChevronDown, ChevronUp, AlertOctagon, Sparkles, BrainCircuit
+  Truck, Archive, TrendingDown, Clock, ChevronDown, ChevronUp, Sparkles, BrainCircuit
 } from "lucide-react";
 
 // --- TYPES ---

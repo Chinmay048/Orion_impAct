@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   Truck, Navigation, Leaf, CheckCircle2, 
-  AlertTriangle, Wind, Box, Clock,
+  Box, Clock,
   PackageCheck, Share2, Zap, Loader2
 } from "lucide-react";
 
